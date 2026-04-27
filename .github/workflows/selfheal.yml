@@ -11,6 +11,9 @@ on:
 jobs:
   test-and-heal:
     runs-on: ubuntu-latest
+    permissions:
+      contents: Write
+
 
     steps:
       # Step 1: Get the code from the feature branch
@@ -19,7 +22,8 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
-
+          persist-credentials: true
+     
       # Step 2: Setup Node.js (ES Modules need Node 18+)
       - name: Setup Node.js
         uses: actions/setup-node@v4
