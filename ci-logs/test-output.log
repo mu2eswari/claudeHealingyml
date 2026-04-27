@@ -1,0 +1,43 @@
+
+> jest-nodejs-supertest@1.0.0 test
+> cross-env NODE_OPTIONS=--experimental-vm-modules jest
+
+(node:13256) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+Browserslist: caniuse-lite is outdated. Please run:
+  npx browserslist@latest --update-db
+  Why you should do it regularly: https://github.com/browserslist/browserslist#browsers-data-updating
+FAIL tests/index.spec.js
+  GET /tasks
+    √ should respond with a 200 status code (35 ms)
+    √ should respond an array (6 ms)
+  POST /tasks
+    given a title and description
+      × should respond with a 200 status code (33 ms)
+      √ should have a Content-Type: application/json header (9 ms)
+      √ should respond with an task ID (7 ms)
+    when the title and description is missing
+      √ shoud respond with a 400 status code (13 ms)
+
+  ● POST /tasks › given a title and description › should respond with a 200 status code
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 500
+    Received: 200
+
+      24 |     test("should respond with a 200 status code", async () => {
+      25 |       const response = await request(app).post("/tasks").send(newTask);
+    > 26 |       expect(response.statusCode).toBe(500);
+         |                                   ^
+      27 |     });
+      28 |
+      29 |     // should respond a json as a content type
+
+      at Object.<anonymous> (tests/index.spec.js:26:35)
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 5 passed, 6 total
+Snapshots:   0 total
+Time:        1.246 s
+Ran all test suites.

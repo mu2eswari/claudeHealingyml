@@ -1,0 +1,91 @@
+name: Self-Healing CI Agent
+
+on:
+  push:
+    branches-ignore:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test-and-heal:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Get the code from the feature branch
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      # Step 2: Setup Node.js (ES Modules need Node 18+)
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      # Step 3: Install project dependencies
+      - name: Install dependencies
+        run: npm install
+
+      # Step 4: Install Claude Code CLI
+      - name: Install Claude Code
+        run: npm install -g @anthropic-ai/claude-code
+
+      # Step 5: Capture only the changed files — limits Claude scope
+      - name: Get changed files
+        run: |
+          mkdir -p ci-logs
+          git diff --name-only ${{ github.event.before }} \
+            ${{ github.sha }} > ci-logs/changed-files.txt || \
+          git diff --name-only HEAD~1 HEAD > ci-logs/changed-files.txt
+          echo "--- Changed files in this push ---"
+          cat ci-logs/changed-files.txt
+
+      # Step 6: Run tests and capture output to log
+      - name: Run test suite
+        run: |
+          set +e
+          npm test 2>&1 | tee ci-logs/test-output.log
+          echo "TEST_EXIT=${PIPESTATUS[0]}" >> $GITHUB_ENV
+          set -e
+
+      # Step 7: Run Claude ONLY if tests failed
+      - name: Run self-healing agent
+        if: env.TEST_EXIT != '0'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          claude -p "
+            You are a self-healing CI agent. Follow CLAUDE.md exactly.
+            STEP 1: Read ci-logs/test-output.log
+            STEP 2: Read ONLY files listed in ci-logs/changed-files.txt
+                    If empty, read only src/app.js
+            STEP 3: Classify failures as Deterministic or Flaky
+            STEP 4: Fix DETERMINISTIC failures in src/ only
+            STEP 5: Run npm test to verify fix
+            STEP 6: Write RCA.md
+            STEP 7: git add -A then git commit
+          " --allowedTools "Read,Write,Edit,Bash" \
+            --permission-mode acceptEdits
+
+      # Step 8: Push the healed commit back to the branch
+      - name: Push healed fix
+        if: env.TEST_EXIT != '0'
+        run: |
+          git config user.email "claude-agent@ci.bot"
+          git config user.name "Claude Self-Heal Agent"
+          git push origin HEAD
+
+      # Step 9: Upload logs and RCA for developer review (always runs)
+      - name: Upload healing report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: healing-report
+          path: |
+            ci-logs/
+            RCA.md

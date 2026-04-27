@@ -1,0 +1,22 @@
+{
+  "name": "jest-nodejs-supertest",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+  "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.17.1",
+    "uuid": "^8.3.2"
+  },
+  "devDependencies": {
+    "cross-env": "^10.1.0",
+    "jest": "^27.2.5",
+    "supertest": "^6.1.6"
+  }
+}
