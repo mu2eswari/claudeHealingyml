@@ -12,7 +12,7 @@ jobs:
   test-and-heal:
     runs-on: ubuntu-latest
     permissions:
-      contents: Write
+      contents: write
 
 
     steps:
