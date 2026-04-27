@@ -1,64 +1,43 @@
 # Root Cause Analysis
 
 **Date:** 2026-04-27  
-**Branch:** feature/heal  
-**CI Run Result:** 1 failed → fixed → 6/6 passed
-
----
+**Branch:** feature/healyml  
+**Status:** Resolved
 
 ## Failure Summary
 
-| Test | File | Line | Classification |
-|------|------|------|----------------|
-| `POST /tasks › given a title and description › should respond with a 200 status code` | `tests/index.spec.js` | 26 | **Deterministic** |
-
----
+| Test | Type | Status |
+|------|------|--------|
+| `POST /tasks › given a title and description › should respond with a 200 status code` | Deterministic | Fixed |
 
 ## Root Cause
 
-**Wrong expected value in test assertion.**
+**File:** `tests/index.spec.js:27`  
+**Type:** Deterministic — wrong assertion value (typo)
 
-The test name and surrounding comment both declared the intent as "should respond with a 200 status code", but the assertion on line 26 was:
+The test named *"should respond with a 200 status code"* contained the assertion:
 
 ```js
-// before (wrong)
-expect(response.statusCode).toBe(500);
+expect(response.statusCode).toBe(500);  // wrong
 ```
 
-The application was functioning correctly — `POST /tasks` with a valid body returns HTTP 200. The assertion expected 500, which is an error status code, directly contradicting the test's stated intent. This was a copy-paste or accidental edit error introduced in the test file.
-
----
+The server (`src/app.js:27`) correctly returns HTTP 200 on a successful `POST /tasks`. The expected value `500` is inconsistent with both the test name and the inline comment (`// should respond with a 200 code`). This was a copy-paste or typo error introduced into the test assertion.
 
 ## Fix Applied
 
-**File:** `tests/index.spec.js`, line 26  
-**Change (1 line):**
+Changed `tests/index.spec.js:27`:
 
 ```diff
 - expect(response.statusCode).toBe(500);
 + expect(response.statusCode).toBe(200);
 ```
 
----
+No changes to `src/` were required — the application logic was correct.
 
 ## Flaky Failures
 
-None detected. All failures in this run were deterministic (wrong assertion constant, reproducible 100% of the time regardless of environment or timing).
-
----
+None identified. All other 5 tests were consistently passing.
 
 ## Verification
 
-After the fix, `npm test` produced:
-
-```
-Tests: 6 passed, 6 total
-Test Suites: 1 passed, 1 total
-```
-
----
-
-## Action Required for Developer
-
-- Review and commit the single-line change in `tests/index.spec.js`.
-- No source code (routes, models, app logic) was modified.
+After the fix, `npm test` reports **6/6 tests passing**, 0 failures.
